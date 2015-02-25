@@ -295,10 +295,25 @@ class CI_Router {
 			show_error('Unable to determine what should be displayed. A default route has not been specified in the routing file.');
 		}
 
-		// Is the method being specified?
-		if (sscanf($this->default_controller, '%[^/]/%s', $class, $method) !== 2)
+		// If default_controller string has more than 1 slash it is in a subfolder
+		if(substr_count($this->default_controller, '/') > 1)
 		{
-			$method = 'index';
+			// getting pieces of uri
+			$segments = array_reverse(explode('/', $this->default_controller));
+
+			$method = array_shift($segments);
+			$class = array_shift($segments);
+			$directory = implode('/', array_reverse($segments));
+		
+			$this->set_directory($directory);
+		}
+		else
+		{
+			// Is the method being specified?
+			if (sscanf($this->default_controller, '%[^/]/%s', $class, $method) !== 2)
+			{
+				$method = 'index';
+			}
 		}
 
 		if ( ! file_exists(APPPATH.'controllers/'.$this->directory.ucfirst($class).'.php'))
@@ -307,7 +322,7 @@ class CI_Router {
 			return;
 		}
 
-		$this->set_class($class);
+		$this->set_class($class);		
 		$this->set_method($method);
 
 		// Assign routed segments, index starting from 1
